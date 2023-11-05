@@ -2,6 +2,7 @@ import { useUserContext } from "@/context/AuthContext";
 import { formatSocialMediaDate } from "@/lib/utils";
 import { Models } from "appwrite";
 import { Link } from "react-router-dom";
+import PostStats from "./PostStats";
 
 type PostCardProps = {
   post: Models.Document;
@@ -9,10 +10,7 @@ type PostCardProps = {
 
 const PostCard = ({ post }: PostCardProps) => {
   const { user } = useUserContext();
-  if (!post.$creator) {
-    // Handle this case, perhaps return null or a placeholder
-    return null;
-  }
+  if (!post.creator) return;
 
   return (
     <div className="post-card">
@@ -47,17 +45,20 @@ const PostCard = ({ post }: PostCardProps) => {
             </div>
           </div>
         </div>
-        <Link to={`/update-post/${post.$id}`}>
+        <Link
+          to={`/update-post/${post.$id}`}
+          className={`${user.id !== post.creator.$id && "hidden"}`}
+        >
           <img src="/assets/icons/edit.svg" alt="edit" width={18} />
         </Link>
       </div>
       <Link to={`/posts/${post.$id}`}>
-        <div className="small-medium lg:base-medium py-5">
+        <div className="small-medium lg:base-medium py-6">
           <p>{post.caption}</p>
           <ul className="flex gap-1 mt-3">
             {post.tags.map((tag: string) => (
               <li key={tag} className="text-light-3">
-                #{tag}
+                #tags
               </li>
             ))}
           </ul>
@@ -68,6 +69,7 @@ const PostCard = ({ post }: PostCardProps) => {
           alt="post image"
         />
       </Link>
+      <PostStats post={post} userId={user.id} />
     </div>
   );
 };
