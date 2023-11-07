@@ -19,16 +19,24 @@ import { Models } from "appwrite";
 import { useUserContext } from "@/context/AuthContext";
 import { useToast } from "../ui/use-toast";
 import { useNavigate } from "react-router-dom";
-import { useCreatePost } from "@/lib/react-query/queriesAndMutation";
+import {
+  useCreatePost,
+  useUpdatePost,
+} from "@/lib/react-query/queriesAndMutation";
+import { Loader } from "lucide-react";
+
 type PostFormProps = {
   post?: Models.Document;
+  action: "Create" | "Update";
 };
 
-const Post = ({ post }: PostFormProps) => {
+const Post = ({ post, action }: PostFormProps) => {
   const navigate = useNavigate();
   const { mutateAsync: createPost, isPending: isLoadingCreate } =
     useCreatePost();
-  const toast = useToast();
+  const { mutateAsync: updatePost, isPending: isLoadingUpdate } =
+    useUpdatePost();
+  const { toast } = useToast();
   const { user } = useUserContext();
   // 1. Define your form.
   const form = useForm<z.infer<typeof PostValidation>>({
@@ -43,6 +51,18 @@ const Post = ({ post }: PostFormProps) => {
 
   // 2. Define a submit handler.
   async function onSubmit(values: z.infer<typeof PostValidation>) {
+    if (post && action === "Update") {
+      const updatedPost = await updatePost({
+        ...values,
+        postId: post.$id,
+        imageId: post?.imageId,
+        imageUrl: post?.imageUrl,
+      });
+      if (!updatedPost) {
+        toast({ title: "please try again" });
+      }
+      return navigate(`/post/${post.$id}`);
+    }
     const newPost = await createPost({
       ...values,
       userId: user.id,
@@ -116,13 +136,13 @@ const Post = ({ post }: PostFormProps) => {
           render={({ field }) => (
             <FormItem>
               <FormLabel className="sad-form_label">
-                Add tags (seperated by ",")
+                Add tags ( seperated by ",")
               </FormLabel>
               <FormControl>
                 <Input
                   type="text"
                   className="shad-input"
-                  placeholder="Rick,And,Roll......."
+                  placeholder="Rick,Roll......."
                   {...field}
                 />
               </FormControl>
@@ -135,8 +155,10 @@ const Post = ({ post }: PostFormProps) => {
           <Button
             type="submit"
             className="shad-button_primary whitespace-nowrap"
+            disabled={isLoadingCreate || isLoadingUpdate}
           >
-            Submit
+            {isLoadingCreate || (isLoadingUpdate && <Loader />)}
+            {action}Post
           </Button>
           <Button type="button" className="shad-button_dark_4">
             Cancel

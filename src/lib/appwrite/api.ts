@@ -1,6 +1,7 @@
-import { INewPost, INewUser } from "@/types";
+import { INewPost, INewUser, IUpdatePost } from "@/types";
 import { ID, Query } from "appwrite";
 import { account, appwriteConfig, avatars, database, storage } from "./config";
+import { error } from "console";
 
 export async function createUserAccount(user: INewUser) {
   try {
@@ -162,4 +163,157 @@ export async function getRecentPosts() {
   if (!posts) throw Error;
 
   return posts;
+}
+export async function likedPost(postId: string, likedArray: string[]) {
+  try {
+    const updatedPost = await database.updateDocument(
+      appwriteConfig.databaseId,
+      appwriteConfig.postCollectionId,
+      postId,
+      {
+        likes: likedArray,
+      }
+    );
+    if (!updatedPost) throw Error;
+
+    return updatedPost;
+  } catch (error) {
+    console.log(error);
+  }
+}
+export async function savePost(postId: string, userId: string) {
+  try {
+    const updatedPost = await database.createDocument(
+      appwriteConfig.databaseId,
+      appwriteConfig.saveCollectionId,
+      ID.unique(),
+      {
+        user: userId,
+        post: postId,
+      }
+    );
+    if (!updatedPost) throw Error;
+
+    return updatedPost;
+  } catch (error) {
+    console.log(error);
+  }
+}
+export async function deleteSavedPost(saveRecordId: string) {
+  try {
+    const statusCode = await database.deleteDocument(
+      appwriteConfig.databaseId,
+      appwriteConfig.saveCollectionId,
+      saveRecordId
+    );
+    if (!statusCode) throw Error;
+
+    return { status: "OK" };
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+export async function getPostById(postId: string) {
+  try {
+    const post = await database.getDocument(
+      appwriteConfig.databaseId,
+      appwriteConfig.postCollectionId,
+      postId
+    );
+    return post;
+  } catch (error) {
+    console.log(error);
+  }
+}
+export async function updatePost(post: IUpdatePost) {
+  const hasFileToUpdate = post.file.length > 0;
+
+  try {
+    let image = {
+      imageUrl: post.imageUrl,
+      imageId: post.imageId,
+    };
+    if (hasFileToUpdate) {
+      const uploadedFile = await uploadFile(post.file[0]);
+      if (!uploadedFile) throw Error;
+      const fileUrl = getFilePreview(uploadedFile.$id);
+      if (!fileUrl) {
+        dleteFile(uploadedFile.$id);
+        throw Error;
+      }
+      image = { ...image, imageUrl: fileUrl, imageId: uploadedFile.$id };
+    }
+
+    const tags = post.tags?.replace(/ /g, "").split(",") || [];
+    const updatedPost = await database.updateDocument(
+      appwriteConfig.databaseId,
+      appwriteConfig.postCollectionId,
+      post.postId,
+      {
+        caption: post.caption,
+        imageUrl: image.imageUrl,
+        imageId: image.imageId,
+        location: post.location,
+        tags: tags,
+      }
+    );
+    if (!updatedPost) {
+      await dleteFile(post.imageId);
+      throw Error;
+    }
+    return updatedPost;
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+export async function deletePost(postId: string, imageId: string) {
+  if (!postId || !imageId) throw Error;
+  try {
+    await database.deleteDocument(
+      appwriteConfig.databaseId,
+      appwriteConfig.postCollectionId,
+      postId
+    );
+    return { status: "OK" };
+  } catch (error) {
+    console.log(error);
+  }
+}
+export async function getInfinitePost({ pageParam }: { pageParam: number }) {
+  const queries: any[] = [Query.orderDesc("$updatedAt"), Query.limit(9)];
+
+  if (pageParam) {
+    queries.push(Query.cursorAfter(pageParam.toString()));
+  }
+
+  try {
+    const posts = await database.listDocuments(
+      appwriteConfig.databaseId,
+      appwriteConfig.postCollectionId,
+      queries
+    );
+
+    if (!posts) throw Error;
+
+    return posts;
+  } catch (error) {
+    console.log(error);
+  }
+}
+export async function searchPost(searchTerm: string) {
+  try {
+    const posts = await database.listDocuments(
+      appwriteConfig.databaseId,
+      appwriteConfig.postCollectionId,
+      [Query.search("caption", searchTerm)]
+    );
+
+    if (!posts) throw Error;
+
+    return posts;
+  } catch (error) {
+    console.log(error);
+  }
 }
