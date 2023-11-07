@@ -1,6 +1,7 @@
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import GridPostList from "./GridPostList";
+import { useInView } from "react-intersection-observer";
 import SearchResults from "@/components/shared/SearchResults";
 import {
   useGetPosts,
@@ -10,22 +11,26 @@ import useDebounce from "@/Hooks/useDebounce";
 import { Loader } from "lucide-react";
 
 const Explore = () => {
-  // const { data: posts, fetchNextPage, hasNextPage } = useGetPosts();
+  const { ref, inView } = useInView();
+  const { data: posts, fetchNextPage, hasNextPage } = useGetPosts();
   const [searchValue, setSearchValue] = useState("");
-  // const deBounced = useDebounce(searchValue, 500);
-  // const { data: searchPosts, isFetching: isSearcFetching } =
-  //   useSearchPosts(deBounced);
-  // if (!posts) {
-  //   return (
-  //     <div className="flex-center w-full h-full">
-  //       <Loader />
-  //     </div>
-  //   );
-  // }
-  // const shouldShowSearchResults = searchValue !== "";
-  // const shouldShowPosts =
-  //   !shouldShowSearchResults &&
-  //   posts.pages.every((item) => item.documents.length === 0);
+  const deBounced = useDebounce(searchValue, 500);
+  const { data: searchPosts, isFetching: isSearchFetching } =
+    useSearchPosts(deBounced);
+  useEffect(() => {
+    if (inView && !searchValue) fetchNextPage();
+  }, [inView, searchValue]);
+  if (!posts) {
+    return (
+      <div className="flex-center w-full h-full">
+        <Loader />
+      </div>
+    );
+  }
+  const shouldShowSearchResults = searchValue !== "";
+  const shouldShowPosts =
+    !shouldShowSearchResults &&
+    posts.pages.every((item) => item.documents.length === 0);
   return (
     <div className="explore-container">
       <div className="explore-inner_container">
@@ -58,9 +63,12 @@ const Explore = () => {
           />
         </div>
       </div>
-      {/* <div className="flex flex-wrap gap-9 w-full max-w-5xl">
+      <div className="flex flex-wrap gap-9 w-full max-w-5xl">
         {shouldShowSearchResults ? (
-          <SearchResults />
+          <SearchResults
+            isSearchFetching={isSearchFetching}
+            searchedPost={searchPosts}
+          />
         ) : shouldShowPosts ? (
           <p className="text-light-4 mt-10 text-center w-full">End of Posts</p>
         ) : (
@@ -68,7 +76,12 @@ const Explore = () => {
             <GridPostList key={`page-${index}`} posts={item.documents} />
           ))
         )}
-      </div> */}
+      </div>
+      {hasNextPage && !searchValue && (
+        <div ref={ref} className="mt-10">
+          <Loader />
+        </div>
+      )}
     </div>
   );
 };
