@@ -9,6 +9,9 @@ function Home() {
     isPending: isPostLoading,
     isError: isErrorPosts,
   } = userGetRecentPosts();
+  if (isErrorPosts) {
+    return <div>Error loading posts</div>;
+  }
   return (
     <div className="flex flex-1">
       <div className="home-container">

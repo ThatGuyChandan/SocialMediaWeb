@@ -1,7 +1,6 @@
 import { INewPost, INewUser, IUpdatePost } from "@/types";
 import { ID, Query } from "appwrite";
 import { account, appwriteConfig, avatars, database, storage } from "./config";
-import { error } from "console";
 
 export async function createUserAccount(user: INewUser) {
   try {
@@ -313,6 +312,21 @@ export async function searchPost(searchTerm: string) {
     if (!posts) throw Error;
 
     return posts;
+  } catch (error) {
+    console.log(error);
+  }
+}
+export async function getUserById(userId: string) {
+  try {
+    const user = await database.getDocument(
+      appwriteConfig.databaseId,
+      appwriteConfig.userCollectionId,
+      userId
+    );
+
+    if (!user) throw Error;
+
+    return user;
   } catch (error) {
     console.log(error);
   }

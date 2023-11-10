@@ -1,4 +1,3 @@
-import React from "react";
 import { SignupValidation } from "@/lib/validation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link, useNavigate } from "react-router-dom";
@@ -142,7 +141,7 @@ function Signup() {
           )}
         />
         <Button type="submit" className="shad-button_primary">
-          {isCreatingAccount ? (
+          {isCreatingAccount || isSigninIn || isUserLoading ? (
             <div className="flex-center gap-2">
               <Loader />
               Loading.....

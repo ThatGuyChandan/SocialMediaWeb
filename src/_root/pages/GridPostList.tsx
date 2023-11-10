@@ -10,7 +10,7 @@ type GridPostListProps = {
 };
 const GridPostList = ({
   posts,
-  shoeUser = true,
+  showUser = true,
   showStats = true,
 }: GridPostListProps) => {
   const { user } = useUserContext();
@@ -26,7 +26,7 @@ const GridPostList = ({
             />
           </Link>
           <div className="grid-post_user">
-            {shoeUser && (
+            {showUser && (
               <div className="flex items-center justify-start gap-1 flex-1">
                 <img
                   src={post.creator.imageUrl}

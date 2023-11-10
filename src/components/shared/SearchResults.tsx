@@ -11,11 +11,11 @@ const SearchResults = ({
   searchedPost,
 }: SearchResultProps) => {
   if (isSearchFetching) return <Loader />;
-  if (searchedPost && searchedPost.documents.length > 0) {
-    return <GridPostList posts={searchedPost.documents} />;
+  if (searchedPost && searchedPost.length > 0) {
+    return <GridPostList posts={searchedPost} />;
   }
   return (
-    <p className="text-light-4 mt-10 text-center w-full">Nor result found</p>
+    <p className="text-light-4 mt-10 text-center w-full">No result found</p>
   );
 };
 

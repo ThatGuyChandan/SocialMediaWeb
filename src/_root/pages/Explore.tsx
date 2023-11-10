@@ -34,7 +34,7 @@ const Explore = () => {
   return (
     <div className="explore-container">
       <div className="explore-inner_container">
-        <h3 className="h3-bold md:h2-bold w-full">Search posts</h3>
+        <h3 className="h3-bold md:h2-bold w-full">Search </h3>
         <div className="flex gap-1 px-4 w-full rounded-lg bg-dark-4">
           <img
             src="/assets/icons/search.svg"
@@ -67,7 +67,7 @@ const Explore = () => {
         {shouldShowSearchResults ? (
           <SearchResults
             isSearchFetching={isSearchFetching}
-            searchedPost={searchPosts}
+            searchedPost={searchPosts?.documents || []}
           />
         ) : shouldShowPosts ? (
           <p className="text-light-4 mt-10 text-center w-full">End of Posts</p>
