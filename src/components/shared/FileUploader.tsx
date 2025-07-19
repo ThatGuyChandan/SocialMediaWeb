@@ -12,7 +12,6 @@ const MAX_SIZE = 5 * 1024 * 1024; // 5MB
 
 const FileUploader = ({ fieldChange, mediaUrl }: FileUploaderProps) => {
   const [fileUrl, setFileUrl] = useState(mediaUrl);
-  const [file, setFile] = useState<File[]>([]);
   const [error, setError] = useState("");
 
   const onDrop = useCallback(
@@ -35,7 +34,6 @@ const FileUploader = ({ fieldChange, mediaUrl }: FileUploaderProps) => {
         setError("File size must be less than 5MB.");
         return;
       }
-      setFile(acceptedFiles);
       fieldChange(acceptedFiles);
       setFileUrl(URL.createObjectURL(selected));
     },

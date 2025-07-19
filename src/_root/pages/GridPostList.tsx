@@ -5,8 +5,6 @@ import { Link } from "react-router-dom";
 
 type GridPostListProps = {
   posts: Models.Document[];
-  showUser?: boolean;
-  showStats?: boolean;
 };
 const GridPostList = ({
   posts,
