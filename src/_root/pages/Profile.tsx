@@ -78,7 +78,7 @@ const Profile = () => {
       {/* Render user's posts */}
       <div className="w-full mt-10">
         {currentUser.posts && currentUser.posts.length > 0 ? (
-          <GridPostList posts={currentUser.posts} showUser={false} />
+          <GridPostList posts={currentUser.posts} />
         ) : (
           <div className="text-light-4 text-center mt-10">No posts yet.</div>
         )}

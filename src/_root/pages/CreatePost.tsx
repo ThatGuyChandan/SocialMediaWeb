@@ -7,8 +7,6 @@ import { useToast } from "@/components/ui/use-toast";
 const CreatePost = () => {
   const { isAuthenticated } = useUserContext();
   const navigate = useNavigate();
-  const [error, setError] = useState("");
-  const { toast } = useToast();
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -28,7 +26,6 @@ const CreatePost = () => {
           />
           <h2 className="h3-bold md:h2-bold text-left w-full">Create Post</h2>
         </div>
-        {error && <div className="text-red-500 text-sm mt-2">{error}</div>}
         <Post action="Create" />
       </div>
     </div>
