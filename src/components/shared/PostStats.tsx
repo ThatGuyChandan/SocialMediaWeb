@@ -14,6 +14,7 @@ type PostStatProps = {
   userId: string;
 };
 const PostStats = ({ post, userId }: PostStatProps) => {
+  if (!post) return null;
   const likesList = Array.isArray(post?.likes)
     ? post.likes.filter(Boolean).map((user: Models.Document) => user?.$id)
     : [];

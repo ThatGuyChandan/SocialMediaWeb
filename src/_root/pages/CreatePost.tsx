@@ -16,19 +16,6 @@ const CreatePost = () => {
     }
   }, [isAuthenticated, navigate]);
 
-  const handleCreatePost = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    try {
-      // await createPost({ ... }); // fill with actual post data
-      // ...existing success logic...
-    } catch (err: any) {
-      const msg = err?.message || "Failed to create post. Please try again.";
-      setError(msg);
-      toast({ title: "Post creation failed", description: msg, variant: "destructive" });
-    }
-  };
-
   return (
     <div className="flex flex-1">
       <div className="common-container">

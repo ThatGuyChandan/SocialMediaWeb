@@ -29,7 +29,7 @@ const PostDetails = () => {
   const [commentError, setCommentError] = useState("");
   const { toast } = useToast();
   const { data: commentsData, isLoading: isCommentsLoading } = useGetCommentsByPostId(id || "");
-  const { mutateAsync: createComment, isLoading: isCommenting } = useCreateComment();
+  const { mutateAsync: createComment, isPending: isCommenting } = useCreateComment();
 
   // Fix the image URL if it's an old /preview URL
   const fixedImageUrl = post ? fixImageUrl(post.imageUrl) : "";
