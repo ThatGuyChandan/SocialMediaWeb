@@ -19,6 +19,7 @@ import { useSignInAccount } from "@/lib/react-query/queriesAndMutation";
 import { useUserContext } from "@/context/AuthContext";
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
+import { account } from "@/lib/appwrite/config";
 
 function Signin() {
   const navigate = useNavigate();
@@ -43,6 +44,12 @@ function Signin() {
     setError("");
     setLoading(true);
     try {
+      // Always clear any existing session before sign-in
+      try {
+        await account.deleteSession('current');
+      } catch (e) {
+        // Ignore if no session exists
+      }
       const session = await signInAccount({
         email: values.email,
         password: values.password,

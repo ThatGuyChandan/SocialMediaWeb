@@ -4,6 +4,12 @@ import { account, appwriteConfig, avatars, database, storage } from "./config";
 
 export async function createUserAccount(user: INewUser) {
   try {
+    // Delete any existing session before creating a new one
+    try {
+      await account.deleteSession("current");
+    } catch (e) {
+      // No active session, ignore
+    }
     // Create account with email verification (recommended for production)
     const newAccount = await account.create(
       ID.unique(),
@@ -87,6 +93,12 @@ export async function saveUserToDB(user: {
 
 export async function signInAccount(user: { email: string; password: string }) {
   try {
+    // Delete any existing session before creating a new one
+    try {
+      await account.deleteSession("current");
+    } catch (e) {
+      // No active session, ignore
+    }
     const session = await account.createEmailSession(user.email, user.password);
     return session;
   } catch (error) {

@@ -20,7 +20,7 @@ import {
 } from "@/lib/react-query/queriesAndMutation";
 import { useUserContext } from "@/context/AuthContext";
 import { account } from "@/lib/appwrite/config";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 function Signup() {
   const { toast } = useToast();
   const { isLoading: isUserLoading } = useUserContext();
@@ -39,11 +39,22 @@ function Signup() {
     },
   });
 
+  useEffect(() => {
+    setError("");
+    setVerificationSent(false);
+    form.reset();
+  }, []);
+
   // 2. Define a submit handler.
   async function onSubmit(values: z.infer<typeof SignupValidation>) {
     setError("");
     try {
-      // Optionally: await account.deleteSession('current'); // clear any existing session
+      // Always clear any existing session before sign-up
+      try {
+        await account.deleteSession('current');
+      } catch (e) {
+        // Ignore if no session exists
+      }
       const newUser = await createUserAccount(values);
       console.log("New user created:", newUser);
       // If email verification is enabled, do NOT auto-login
