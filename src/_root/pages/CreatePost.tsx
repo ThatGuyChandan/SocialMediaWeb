@@ -1,8 +1,7 @@
 import Post from "@/components/forms/Post";
 import { useUserContext } from "@/context/AuthContext";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useToast } from "@/components/ui/use-toast";
 
 const CreatePost = () => {
   const { isAuthenticated } = useUserContext();
