@@ -9,8 +9,14 @@ type PostCardProps = {
 };
 
 const PostCard = ({ post }: PostCardProps) => {
-  const { user } = useUserContext();
-  if (!post.creator) return;
+  const { user, isAuthenticated } = useUserContext();
+  
+  if (!post.creator) return null;
+
+  // Fix the image URL if it's an old /preview URL
+  const fixedImageUrl = post.imageUrl && post.imageUrl.includes('/preview')
+    ? post.imageUrl.replace('/preview', '/view')
+    : post.imageUrl;
 
   return (
     <div className="post-card">
@@ -18,58 +24,57 @@ const PostCard = ({ post }: PostCardProps) => {
         <div className="flex items-center gap-3">
           <Link
             to={`/profile/${post.creator.$id}`}
-            className={user.id !== post.creator.$id ? "hidden" : ""}
+            className="flex items-center gap-3 group"
           >
             <img
-              src={
-                post.creator?.imageUrl ||
-                "/assets/icons/profile-placeholder.svg"
-              }
+              src={post.creator?.imageUrl || "/assets/icons/profile-placeholder.svg"}
               alt="creator"
-              className="rounded-full w-12 lg:h-12"
+              className="rounded-full w-12 lg:h-12 border-2 border-primary-500 group-hover:scale-105 transition-transform"
             />
-          </Link>
-          <div className="flex flex-col">
-            <p className="base-medium lg:body-bold text-lime-50">
-              {post.creator.name}
-            </p>
-
-            <div className="flex-center gap-2 text-light-3">
-              <p className="subtle-semibold lg:small-regular">
-                {formatSocialMediaDate(post.$createdAt)}
-              </p>
-
-              <div className="subtle-semibold lg:small-regular m-1">
-                <p>-{post.location}</p>
-              </div>
+            <div className="flex flex-col">
+              <span className="base-medium lg:body-bold text-lime-50 group-hover:underline">
+                {post.creator.name}
+              </span>
+              <span className="small-regular text-light-3 group-hover:text-primary-500">@{post.creator.username}</span>
             </div>
-          </div>
+          </Link>
         </div>
-        <Link
-          to={`/update-post/${post.$id}`}
-          className={`${user.id !== post.creator.$id && "hidden"}`}
-        >
-          <img src="/assets/icons/edit.svg" alt="edit" width={18} />
-        </Link>
+        {isAuthenticated && user.id === post.creator.$id && (
+          <Link
+            to={`/update-post/${post.$id}`}
+            className=""
+          >
+            <img src="/assets/icons/edit.svg" alt="edit" width={18} />
+          </Link>
+        )}
       </div>
       <Link to={`/post/${post.$id}`}>
         <div className="small-medium lg:base-medium py-6">
           <p>{post.caption}</p>
           <ul className="flex gap-1 mt-3">
-            {post.tags.map((tag: string) => (
-              <li key={tag} className="text-light-3">
+            {post.tags && Array.isArray(post.tags) && post.tags.map((tag: string, idx: number) => (
+              <li key={`${post.$id}-tag-${idx}`} className="text-light-3">
                 #{tag}
               </li>
             ))}
           </ul>
         </div>
         <img
-          src={post.imageUrl || "/assets/icons/profile-placeholder.svg"}
+          src={fixedImageUrl || "/assets/icons/profile-placeholder.svg"}
           className="post-card_img"
           alt="post image"
+          onError={(e) => {
+            e.currentTarget.src = "/assets/icons/profile-placeholder.svg";
+          }}
         />
       </Link>
-      <PostStats post={post} userId={user.id} />
+      {isAuthenticated ? (
+        <PostStats post={post} userId={user.id} />
+      ) : (
+        <div className="text-center mt-4">
+          <Link to="/signin" className="text-blue-400 underline text-sm">Sign in to like, save, or comment</Link>
+        </div>
+      )}
     </div>
   );
 };

@@ -21,6 +21,8 @@ import {
   signInAccount,
   signOutAccount,
   updatePost,
+  createComment,
+  getCommentsByPostId,
 } from "../appwrite/api";
 import { QUERY_KEYS } from "./queryKey";
 
@@ -184,5 +186,19 @@ export const useGetUserById = (userId: string) => {
     queryKey: [QUERY_KEYS.GET_USER_BY_ID, userId],
     queryFn: () => getUserById(userId),
     enabled: !!userId,
+  });
+};
+
+export const useCreateComment = () => {
+  return useMutation({
+    mutationFn: (data: { postId: string; userId: string; userName: string; content: string }) => createComment(data),
+  });
+};
+
+export const useGetCommentsByPostId = (postId: string) => {
+  return useQuery({
+    queryKey: ["comments", postId],
+    queryFn: () => getCommentsByPostId(postId),
+    enabled: !!postId,
   });
 };

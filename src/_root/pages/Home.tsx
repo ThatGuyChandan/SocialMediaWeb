@@ -12,6 +12,7 @@ function Home() {
   if (isErrorPosts) {
     return <div>Error loading posts</div>;
   }
+  const hasPosts = posts && posts.documents && posts.documents.length > 0;
   return (
     <div className="flex flex-1">
       <div className="home-container">
@@ -20,14 +21,19 @@ function Home() {
 
           {isPostLoading && !posts ? (
             <Loader />
-          ) : (
+          ) : hasPosts ? (
             <ul className="flex flex-col flex-1 gap-9 w-full ">
-              {posts?.documents.map((post: Models.Document) => (
+              {posts.documents.map((post: Models.Document) => (
                 <li key={post.$id} className="flex justify-center w-full">
                   <PostCard post={post} />
                 </li>
               ))}
             </ul>
+          ) : (
+            <div className="flex flex-col items-center justify-center w-full h-96 gap-4">
+              <img src="/assets/icons/posts.svg" alt="No posts" width={64} height={64} />
+              <p className="text-light-4 text-xl">No posts yet. Be the first to create one!</p>
+            </div>
           )}
         </div>
       </div>

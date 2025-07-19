@@ -14,7 +14,9 @@ type PostStatProps = {
   userId: string;
 };
 const PostStats = ({ post, userId }: PostStatProps) => {
-  const likesList = post?.likes.map((user: Models.Document) => user.$id);
+  const likesList = Array.isArray(post?.likes)
+    ? post.likes.filter(Boolean).map((user: Models.Document) => user?.$id)
+    : [];
   const [likes, setLikes] = useState(likesList);
   const [isSaved, setIsSaved] = useState(false);
   const { mutate: likePost } = useLikePost();
@@ -22,9 +24,9 @@ const PostStats = ({ post, userId }: PostStatProps) => {
   const { mutate: deleteSavePost, isPending: isDeletingSavedPost } =
     useDeleteSavePost();
   const { data: currentUser } = useGetCurrentUser();
-  const savedPostRecord = currentUser?.save.find(
-    (record: Models.Document) => record.post.$id === post?.$id
-  );
+  const savedPostRecord = currentUser?.save && Array.isArray(currentUser.save)
+    ? currentUser.save.find((record: Models.Document) => record?.post && record.post.$id === post?.$id)
+    : undefined;
   useEffect(() => {
     setIsSaved(!!savedPostRecord);
   }, [currentUser]);

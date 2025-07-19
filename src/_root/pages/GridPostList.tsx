@@ -14,29 +14,28 @@ const GridPostList = ({
   showStats = true,
 }: GridPostListProps) => {
   const { user } = useUserContext();
+  // Filter out posts with missing creators
+  const filteredPosts = posts.filter(post => post.creator);
   return (
-    <ul className="grid-container  ">
-      {posts.map((post) => (
-        <li key={post.$id} className="relative min-w-80 h-80 ">
-          <Link to={`/post/${post.$id}`} className="grid-post_link">
+    <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+      {filteredPosts.map((post) => (
+        <li key={post.$id} className="bg-dark-3 rounded-lg p-4 flex flex-col h-full">
+          {/* Profile info at the top, only once */}
+          <div className="flex items-center gap-2 mb-1">
+            <img src={post.creator?.imageUrl || '/assets/icons/profile-placeholder.svg'} alt="user" className="w-7 h-7 rounded-full" />
+            <span className="font-semibold text-light-1">{post.creator?.username || 'Unknown User'}</span>
+          </div>
+          {/* Post image */}
+          <Link to={`/post/${post.$id}`} className="grid-post_link flex-1">
             <img
               src={post.imageUrl}
               alt="post"
               className="h-full w-full object-cover"
             />
           </Link>
-          <div className="grid-post_user">
-            {showUser && (
-              <div className="flex items-center justify-start gap-1 flex-1">
-                <img
-                  src={post.creator.imageUrl}
-                  alt="creator"
-                  className="h-8 w-8 rounded-full"
-                />
-                <p className="line-clamp-1">{post.creator.name}</p>
-              </div>
-            )}
-            {showStats && <PostStats post={post} userId={user.id} />}
+          {/* Likes/Save at the bottom */}
+          <div className="mt-3">
+            <PostStats post={post} userId={user.id} />
           </div>
         </li>
       ))}

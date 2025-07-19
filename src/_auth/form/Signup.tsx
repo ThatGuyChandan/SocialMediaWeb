@@ -17,17 +17,18 @@ import Loader from "@/components/shared/Loader";
 import { useToast } from "@/components/ui/use-toast";
 import {
   useCreateUserAccount,
-  useSignInAccount,
 } from "@/lib/react-query/queriesAndMutation";
 import { useUserContext } from "@/context/AuthContext";
+import { account } from "@/lib/appwrite/config";
+import { useState } from "react";
 function Signup() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { checkAuthUser, isLoading: isUserLoading } = useUserContext();
+  const { isLoading: isUserLoading } = useUserContext();
   const { mutateAsync: createUserAccount, isPending: isCreatingAccount } =
     useCreateUserAccount();
-  const { mutateAsync: signInAccount, isPending: isSigninIn } =
-    useSignInAccount();
+  const [verificationSent, setVerificationSent] = useState(false);
+  const [error, setError] = useState("");
   // 1. Define your form.
   const form = useForm<z.infer<typeof SignupValidation>>({
     resolver: zodResolver(SignupValidation),
@@ -41,36 +42,19 @@ function Signup() {
 
   // 2. Define a submit handler.
   async function onSubmit(values: z.infer<typeof SignupValidation>) {
+    setError("");
     try {
+      // Optionally: await account.deleteSession('current'); // clear any existing session
       const newUser = await createUserAccount(values);
       console.log("New user created:", newUser);
-
-      const session = await signInAccount({
-        email: values.email,
-        password: values.password,
-      });
-      if (!session) {
-        toast({
-          title: "Something went wrong. Please login your new account",
-        });
-
-        navigate("/sign-in");
-
-        return;
-      }
-
-      const isLoggedIn = await checkAuthUser();
-      console.log("Is user logged in:", isLoggedIn);
-
-      if (isLoggedIn) {
-        form.reset();
-        navigate("/");
-      } else {
-        toast({ title: "Sign up failed, please try again" });
-      }
-    } catch (error) {
-      console.error("Error during signup:", error);
-      toast({ title: "Sign up failed, please try again" });
+      // If email verification is enabled, do NOT auto-login
+      await account.createVerification("http://localhost:3000/verify");
+      setVerificationSent(true);
+      // Optionally: navigate("/signin"); // or just show the verification message
+    } catch (error: any) {
+      const msg = error?.message || "Failed to sign up. Please try again.";
+      setError(msg);
+      toast({ title: "Sign up failed", description: msg, variant: "destructive" });
     }
   }
 
@@ -78,7 +62,7 @@ function Signup() {
     <Form {...form}>
       <div className="sm:w-420 flex-center flex-col ">
         <img src="/assets/images/GlimmerWave.png" className="w-36 h-26" />
-        <h2 className="h3-bold md:h2-bold pt-5 mb-5">Create new account</h2>
+        <h2 className="h3-bold md:h2-bold pt-5 mb-5">Create a new account</h2>
       </div>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
@@ -93,7 +77,6 @@ function Signup() {
               <FormControl>
                 <Input type="text" {...field} className="shad-input" />
               </FormControl>
-
               <FormMessage />
             </FormItem>
           )}
@@ -107,7 +90,6 @@ function Signup() {
               <FormControl>
                 <Input type="text" {...field} className="shad-input" />
               </FormControl>
-
               <FormMessage />
             </FormItem>
           )}
@@ -121,7 +103,6 @@ function Signup() {
               <FormControl>
                 <Input type="email" {...field} className="shad-input" />
               </FormControl>
-
               <FormMessage />
             </FormItem>
           )}
@@ -135,13 +116,13 @@ function Signup() {
               <FormControl>
                 <Input type="password" {...field} className="shad-input" />
               </FormControl>
-
               <FormMessage />
             </FormItem>
           )}
         />
+        {error && <div className="text-red-500 text-sm mt-2">{error}</div>}
         <Button type="submit" className="shad-button_primary">
-          {isCreatingAccount || isSigninIn || isUserLoading ? (
+          {isCreatingAccount || isUserLoading ? (
             <div className="flex-center gap-2">
               <Loader />
               Loading.....
@@ -150,6 +131,11 @@ function Signup() {
             "sign up"
           )}
         </Button>
+        {verificationSent && (
+          <div className="text-green-500 text-center mt-4">
+            Verification email sent! Please check your inbox and follow the link to verify your account.
+          </div>
+        )}
         <p className="text-small-regular text-light-2  text-center mt-2">
           Already have an acount ?{" "}
           <Link to="/signin" className="text-red underline text-small-semibold">

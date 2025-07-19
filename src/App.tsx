@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import Signin from "./_auth/form/Signin";
 import Signup from "./_auth/form/Signup";
 import Home from "./_root/pages/Home";
@@ -14,28 +14,49 @@ import EditPost from "./_root/pages/EditPost";
 import PostDetails from "./_root/pages/PostDetails";
 import Profile from "./_root/pages/Profile";
 import UpdatePost from "./_root/pages/UpdatePost";
+import ConfigError from "./components/shared/ConfigError";
+import { appwriteConfig } from "./lib/appwrite/config";
+import VerifyEmail from "./_auth/form/VerifyEmail";
+import ForgotPassword from "./_auth/form/ForgotPassword";
+import ResetPassword from "./_auth/form/ResetPassword";
+import { useUserContext } from "@/context/AuthContext";
+
+function ProtectedRoute({ children }: { children: JSX.Element }) {
+  const { isAuthenticated } = useUserContext();
+  if (!isAuthenticated) return <Navigate to="/signin" replace />;
+  return children;
+}
 
 export default function App() {
+  // Check if Appwrite is properly configured
+  const isConfigured = appwriteConfig.projectId && appwriteConfig.databaseId;
+
+  if (!isConfigured) {
+    return <ConfigError />;
+  }
+
   return (
     <main className="flex h-screen">
       <Routes>
         <Route element={<Authlayout />}>
           <Route path="/signin" element={<Signin />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/verify" element={<VerifyEmail />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
         </Route>
         <Route element={<Rootlayout />}>
           <Route index element={<Home />} />
-          <Route path="/explore" element={<Explore />} />
-          <Route path="/saved" element={<Saved />} />
-          <Route path="/all-users" element={<AllUsers />} />
-          <Route path="/create-post" element={<CreatePost />} />
-          <Route path="/update-post/:id" element={<EditPost />} />
-          <Route path="/post/:id" element={<PostDetails />} />
-          <Route path="/profile/:id" element={<Profile />} />
-          <Route path="/update-profile/:id" element={<UpdatePost />} />
+          <Route path="/explore" element={<ProtectedRoute><Explore /></ProtectedRoute>} />
+          <Route path="/saved" element={<ProtectedRoute><Saved /></ProtectedRoute>} />
+          <Route path="/all-users" element={<ProtectedRoute><AllUsers /></ProtectedRoute>} />
+          <Route path="/create-post" element={<ProtectedRoute><CreatePost /></ProtectedRoute>} />
+          <Route path="/update-post/:id" element={<ProtectedRoute><EditPost /></ProtectedRoute>} />
+          <Route path="/post/:id" element={<ProtectedRoute><PostDetails /></ProtectedRoute>} />
+          <Route path="/profile/:id" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+          <Route path="/update-profile/:id" element={<ProtectedRoute><UpdatePost /></ProtectedRoute>} />
         </Route>
       </Routes>
-
       <Toaster />
     </main>
   );

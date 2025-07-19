@@ -4,13 +4,19 @@ import { account, appwriteConfig, avatars, database, storage } from "./config";
 
 export async function createUserAccount(user: INewUser) {
   try {
+    // Create account with email verification (recommended for production)
     const newAccount = await account.create(
       ID.unique(),
       user.email,
       user.password,
       user.name
     );
+    
     if (!newAccount) throw Error;
+    
+    // Automatically sign in the user after account creation
+    await account.createEmailSession(user.email, user.password);
+    
     const avatarUrl = avatars.getInitials(user.name);
 
     const newUser = await saveUserToDB({
@@ -23,8 +29,37 @@ export async function createUserAccount(user: INewUser) {
 
     return newUser;
   } catch (error) {
-    console.log(error);
-    return error;
+    console.error("Error creating user account:", error);
+    return null;
+  }
+}
+
+// Function to verify email (call this when user clicks verification link)
+export async function verifyEmail() {
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    const userId = urlParams.get('userId');
+    const secret = urlParams.get('secret');
+    
+    if (userId && secret) {
+      await account.updateVerification(userId, secret);
+      return true;
+    }
+    return false;
+  } catch (error) {
+    console.error("Error verifying email:", error);
+    return false;
+  }
+}
+
+// Function to resend verification email
+export async function resendVerification() {
+  try {
+    await account.createVerification('http://localhost:3000');
+    return true;
+  } catch (error) {
+    console.error("Error resending verification:", error);
+    return false;
   }
 }
 
@@ -44,7 +79,9 @@ export async function saveUserToDB(user: {
     );
     return newUser;
   } catch (error) {
-    console.log(error);
+    console.error("Error saving user to database:", error);
+    console.error("Check if your database and collection are properly configured");
+    return null;
   }
 }
 
@@ -53,9 +90,11 @@ export async function signInAccount(user: { email: string; password: string }) {
     const session = await account.createEmailSession(user.email, user.password);
     return session;
   } catch (error) {
-    console.log(error);
+    console.error("Error signing in:", error);
+    return null;
   }
 }
+
 export async function getCurrentUser() {
   try {
     const currentAccount = await account.get();
@@ -64,12 +103,21 @@ export async function getCurrentUser() {
     const currentUser = await database.listDocuments(
       appwriteConfig.databaseId,
       appwriteConfig.userCollectionId,
-      [Query.equal("accountId", currentAccount.$id)]
+      [
+        Query.equal("accountId", currentAccount.$id),
+        "expand=save.post,save.post.creator",
+      ]
     );
     if (!currentUser) throw Error;
     return currentUser.documents[0];
-  } catch (error) {
-    console.log(error);
+  } catch (error: any) {
+    if (error.code === 401) {
+      // Not logged in, just return null silently
+      return null;
+    }
+    console.error("Error getting current user:", error);
+    console.error("This might be due to permission issues. Check your Appwrite configuration.");
+    return null;
   }
 }
 
@@ -78,18 +126,32 @@ export async function signOutAccount() {
     const session = await account.deleteSession("current");
     return session;
   } catch (error) {
-    console.log(error);
+    console.error("Error signing out:", error);
+    return error;
   }
 }
+
 export async function createPost(post: INewPost) {
   try {
+    console.log("Creating post with file:", post.file[0]);
+    
     const uploadedFile = await uploadFile(post.file[0]);
-    if (!uploadedFile) throw Error;
+    if (!uploadedFile) {
+      console.error("Failed to upload file");
+      throw Error;
+    }
+    
+    console.log("File uploaded successfully:", uploadedFile);
+    
     const fileUrl = getFilePreview(uploadedFile.$id);
     if (!fileUrl) {
+      console.error("Failed to get file preview URL");
       dleteFile(uploadedFile.$id);
       throw Error;
     }
+    
+    console.log("File URL generated:", fileUrl);
+    
     const tags = post.tags?.replace(/ /g, "").split(",") || [];
     const newPost = await database.createDocument(
       appwriteConfig.databaseId,
@@ -104,15 +166,21 @@ export async function createPost(post: INewPost) {
         tags: tags,
       }
     );
+    
     if (!newPost) {
+      console.error("Failed to create post document");
       await dleteFile(uploadedFile.$id);
       throw Error;
     }
+    
+    console.log("Post created successfully:", newPost);
     return newPost;
   } catch (error) {
-    console.log(error);
+    console.error("Error creating post:", error);
+    return null;
   }
 }
+
 export async function uploadFile(file: File) {
   try {
     const uploadedFile = await storage.createFile(
@@ -122,47 +190,51 @@ export async function uploadFile(file: File) {
     );
     return uploadedFile;
   } catch (error) {
-    console.log(error);
+    console.error("Error uploading file:", error);
+    console.error("Check your storage bucket permissions and file security settings");
+    return null;
   }
 }
-export function getFilePreview(fileId: string) {
-  try {
-    const fileUrl = storage.getFilePreview(
-      appwriteConfig.storageId,
 
-      fileId,
-      2000,
-      2000,
-      "top",
-      100
-    );
-    return fileUrl;
+export function getFilePreview(fileId: string): string | null {
+  try {
+    // Use the SDK's getFileView method which handles project params automatically
+    return storage.getFileView(appwriteConfig.storageId, fileId).href;
   } catch (error) {
-    console.log(error);
+    console.error("Error getting file preview:", error);
+    return null;
   }
 }
+
 export async function dleteFile(fileId: string) {
   try {
     await storage.deleteFile(
       appwriteConfig.storageId,
-
       fileId
     );
     return { status: "OK" };
   } catch (error) {
-    console.log(error);
+    console.error("Error deleting file:", error);
+    return null;
   }
 }
-export async function getRecentPosts() {
-  const posts = await database.listDocuments(
-    appwriteConfig.databaseId,
-    appwriteConfig.postCollectionId,
-    [Query.orderDesc("$createdAt"), Query.limit(20)]
-  );
-  if (!posts) throw Error;
 
-  return posts;
+export async function getRecentPosts() {
+  try {
+    const posts = await database.listDocuments(
+      appwriteConfig.databaseId,
+      appwriteConfig.postCollectionId,
+      [Query.orderDesc("$createdAt"), Query.limit(20)]
+    );
+    if (!posts) throw Error;
+    return posts;
+  } catch (error) {
+    console.error("Error getting recent posts:", error);
+    console.error("Check your database and collection permissions");
+    return null;
+  }
 }
+
 export async function likedPost(postId: string, likedArray: string[]) {
   try {
     const updatedPost = await database.updateDocument(
@@ -177,7 +249,8 @@ export async function likedPost(postId: string, likedArray: string[]) {
 
     return updatedPost;
   } catch (error) {
-    console.log(error);
+    console.error("Error liking post:", error);
+    return null;
   }
 }
 export async function savePost(postId: string, userId: string) {
@@ -230,7 +303,7 @@ export async function updatePost(post: IUpdatePost) {
 
   try {
     let image = {
-      imageUrl: post.imageUrl,
+      imageUrl: post.imageUrl as string,
       imageId: post.imageId,
     };
     if (hasFileToUpdate) {
@@ -329,5 +402,39 @@ export async function getUserById(userId: string) {
     return user;
   } catch (error) {
     console.log(error);
+  }
+}
+
+export async function createComment({ postId, userId, userName, content }: { postId: string; userId: string; userName: string; content: string }) {
+  try {
+    const comment = await database.createDocument(
+      appwriteConfig.databaseId,
+      appwriteConfig.commentsCollectionId,
+      ID.unique(),
+      {
+        postId,
+        userId,
+        userName,
+        content,
+      }
+    );
+    return comment;
+  } catch (error) {
+    console.error("Error creating comment:", error);
+    return null;
+  }
+}
+
+export async function getCommentsByPostId(postId: string) {
+  try {
+    const comments = await database.listDocuments(
+      appwriteConfig.databaseId,
+      appwriteConfig.commentsCollectionId,
+      [Query.equal("postId", postId), Query.orderAsc("$createdAt")]
+    );
+    return comments;
+  } catch (error) {
+    console.error("Error fetching comments:", error);
+    return null;
   }
 }

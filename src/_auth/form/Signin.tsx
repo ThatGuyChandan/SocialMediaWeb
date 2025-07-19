@@ -17,13 +17,18 @@ import Loader from "@/components/shared/Loader";
 import { useToast } from "@/components/ui/use-toast";
 import { useSignInAccount } from "@/lib/react-query/queriesAndMutation";
 import { useUserContext } from "@/context/AuthContext";
+import { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 
 function Signin() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { checkAuthUser, isLoading: isUserLoading } = useUserContext();
+  const { checkAuthUser } = useUserContext();
 
   const { mutateAsync: signInAccount } = useSignInAccount();
+  const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false); // Local loading state
   // 1. Define your form.
   const form = useForm<z.infer<typeof SigninValidation>>({
     resolver: zodResolver(SigninValidation),
@@ -35,24 +40,29 @@ function Signin() {
 
   // 2. Define a submit handler.
   async function onSubmit(values: z.infer<typeof SigninValidation>) {
-    const session = await signInAccount({
-      email: values.email,
-      password: values.password,
-    });
-    if (!session) {
-      toast({ title: "Login failed. Please try again." });
-
-      return;
-    }
-
-    const isLoggedIn = await checkAuthUser();
-    console.log("Is user logged in:", isLoggedIn);
-
-    if (isLoggedIn) {
-      form.reset();
-      navigate("/");
-    } else {
-      toast({ title: "Sign in failed, please try again" });
+    setError("");
+    setLoading(true);
+    try {
+      const session = await signInAccount({
+        email: values.email,
+        password: values.password,
+      });
+      if (!session) {
+        throw new Error("No session returned from server.");
+      }
+      const isLoggedIn = await checkAuthUser();
+      if (isLoggedIn) {
+        form.reset();
+        navigate("/");
+      } else {
+        throw new Error("Login failed. Please try again.");
+      }
+    } catch (err: any) {
+      const msg = err?.message || err?.response?.message || "Failed to sign in. Please try again.";
+      setError(msg);
+      toast({ title: "Sign in failed", description: msg, variant: "destructive" });
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -85,17 +95,33 @@ function Signin() {
           name="password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Password:</FormLabel>
-              <FormControl>
-                <Input type="password" {...field} className="shad-input" />
-              </FormControl>
-
+              <FormLabel>Password</FormLabel>
+              <div className="relative">
+                <FormControl>
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    className="shad-input pr-10"
+                    placeholder="Password"
+                    {...field}
+                  />
+                </FormControl>
+                <button
+                  type="button"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-light-4 text-lg focus:outline-none"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  tabIndex={-1}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
               <FormMessage />
             </FormItem>
           )}
         />
+        {error && <div className="text-red-500 text-sm mt-2">{error}</div>}
         <Button type="submit" className="shad-button_primary">
-          {isUserLoading ? (
+          {loading ? (
             <div className="flex-center gap-2">
               <Loader />
               Loading.....
@@ -110,6 +136,9 @@ function Signin() {
             Sign up
           </Link>
         </p>
+        <div className="text-center mt-4">
+          <Link to="/forgot-password" className="text-blue-400 underline">Forgot Password?</Link>
+        </div>
       </form>
     </Form>
   );

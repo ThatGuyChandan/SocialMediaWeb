@@ -1,6 +1,34 @@
 import Post from "@/components/forms/Post";
+import { useUserContext } from "@/context/AuthContext";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useToast } from "@/components/ui/use-toast";
 
 const CreatePost = () => {
+  const { isAuthenticated } = useUserContext();
+  const navigate = useNavigate();
+  const [error, setError] = useState("");
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate("/signin");
+    }
+  }, [isAuthenticated, navigate]);
+
+  const handleCreatePost = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    try {
+      // await createPost({ ... }); // fill with actual post data
+      // ...existing success logic...
+    } catch (err: any) {
+      const msg = err?.message || "Failed to create post. Please try again.";
+      setError(msg);
+      toast({ title: "Post creation failed", description: msg, variant: "destructive" });
+    }
+  };
+
   return (
     <div className="flex flex-1">
       <div className="common-container">
@@ -13,6 +41,7 @@ const CreatePost = () => {
           />
           <h2 className="h3-bold md:h2-bold text-left w-full">Create Post</h2>
         </div>
+        {error && <div className="text-red-500 text-sm mt-2">{error}</div>}
         <Post action="Create" />
       </div>
     </div>

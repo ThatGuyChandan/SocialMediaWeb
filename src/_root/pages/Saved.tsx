@@ -14,13 +14,10 @@ const Saved = () => {
     );
   }
 
-  const savePosts = currentUser.save
-    .map((savedPost: Models.Document) => ({
-      ...savedPost.post,
-      creator: {
-        imageUrl: currentUser.imageUrl,
-      },
-    }))
+  // Only include saved posts with valid post details
+  const savePosts = (currentUser.save || [])
+    .map((savedPost: Models.Document) => savedPost.post)
+    .filter((post: any) => post && post.caption && post.imageUrl)
     .reverse();
 
   return (
@@ -38,7 +35,7 @@ const Saved = () => {
 
       <ul className="w-full flex justify-center max-w-5xl gap-9">
         {savePosts.length === 0 ? (
-          <p className="text-light-4">No saved posts</p>
+          <p className="text-light-4">No saved posts available.</p>
         ) : (
           <GridPostList posts={savePosts} showStats={false} />
         )}
