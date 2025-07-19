@@ -1,6 +1,6 @@
 import { SignupValidation } from "@/lib/validation";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import {
   Form,
   FormControl,
@@ -22,7 +22,6 @@ import { useUserContext } from "@/context/AuthContext";
 import { account } from "@/lib/appwrite/config";
 import { useState } from "react";
 function Signup() {
-  const navigate = useNavigate();
   const { toast } = useToast();
   const { isLoading: isUserLoading } = useUserContext();
   const { mutateAsync: createUserAccount, isPending: isCreatingAccount } =
