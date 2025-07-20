@@ -104,11 +104,11 @@ function Signin() {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Password</FormLabel>
-              <div className="relative">
+              <div className="relative flex items-center">
                 <FormControl>
                   <input
                     type={showPassword ? "text" : "password"}
-                    className="shad-input pr-10"
+                    className="shad-input pr-10 flex-1"
                     placeholder="Password"
                     {...field}
                   />
@@ -123,11 +123,20 @@ function Signin() {
                   {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
               </div>
+              {/* Password validation error */}
+              {form.watch("password") && form.watch("password").length > 0 && form.watch("password").length < 8 && (
+                <div className="text-red-500 text-xs mt-1">
+                  Password must be at least 8 characters long
+                </div>
+              )}
               <FormMessage />
             </FormItem>
           )}
         />
-        {error && <div className="text-red-500 text-sm mt-2">{error}</div>}
+        {/* Login error message */}
+        {error && (
+          <div className="text-red-500 text-sm mt-2">{error}</div>
+        )}
         <Button type="submit" className="shad-button_primary">
           {loading ? (
             <div className="flex-center gap-2">
