@@ -44,12 +44,7 @@ function Signin() {
     setError("");
     setLoading(true);
     try {
-      // Always clear any existing session before sign-in
-      try {
-        await account.deleteSession('current');
-      } catch (e) {
-        // Ignore if no session exists
-      }
+      // 1. Try to create a session (login)
       const session = await signInAccount({
         email: values.email,
         password: values.password,
@@ -57,6 +52,12 @@ function Signin() {
       if (!session) {
         throw new Error("No session returned from server.");
       }
+      // 2. Wait for session to be established, then fetch user
+      const user = await account.get();
+      if (!user) {
+        throw new Error("Failed to fetch user after login.");
+      }
+      // 3. Update your app state/context with the user info
       const isLoggedIn = await checkAuthUser();
       if (isLoggedIn) {
         form.reset();

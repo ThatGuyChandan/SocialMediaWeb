@@ -2,8 +2,8 @@ import { Client, Account, Databases, Storage, Avatars } from "appwrite";
 
 // Validate environment variables
 const requiredEnvVars = {
-  projectId: import.meta.env.VITE_APPWRITE_PROJECTID,
-  url: import.meta.env.VITE_APPWRITE_URL,
+  projectId: import.meta.env.VITE_APPWRITE_PROJECT_ID,
+  url: import.meta.env.VITE_APPWRITE_ENDPOINT,
   databaseId: import.meta.env.VITE_APPWRITE_DATABASE,
   storageId: import.meta.env.VITE_APPWRITE_STORAGE,
   userCollectionId: import.meta.env.VITE_APPWRITE_USERS,
@@ -28,7 +28,7 @@ if (missingVars.length > 0) {
 
 export const appwriteConfig = {
   projectId: requiredEnvVars.projectId || "",
-  url: requiredEnvVars.url || "https://cloud.appwrite.io/v1",
+  url: requiredEnvVars.url || "",
   databaseId: requiredEnvVars.databaseId || "",
   storageId: requiredEnvVars.storageId || "",
   userCollectionId: requiredEnvVars.userCollectionId || "",

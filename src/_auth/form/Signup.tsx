@@ -132,7 +132,7 @@ function Signup() {
         />
         {error && <div className="text-red-500 text-sm mt-2">{error}</div>}
         <Button type="submit" className="shad-button_primary">
-          {isCreatingAccount || isUserLoading ? (
+          {isCreatingAccount ? (
             <div className="flex-center gap-2">
               <Loader />
               Loading.....
