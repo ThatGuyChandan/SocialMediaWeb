@@ -23,7 +23,6 @@ import { account } from "@/lib/appwrite/config";
 import { useState, useEffect } from "react";
 function Signup() {
   const { toast } = useToast();
-  const { isLoading: isCreatingAccount } = useUserContext();
   const { mutateAsync: createUserAccount, isPending: isCreatingAccount } =
     useCreateUserAccount();
   const [verificationSent, setVerificationSent] = useState(false);
